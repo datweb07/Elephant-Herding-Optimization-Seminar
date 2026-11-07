@@ -1,0 +1,6 @@
+# Dependencies proposed for the future implementation.
+# Pin tested versions once the project starts coding.
+numpy
+matplotlib
+PySide6
+pytest

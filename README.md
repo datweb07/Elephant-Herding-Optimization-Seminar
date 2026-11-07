@@ -1,2 +1,3 @@
-# Elephant-Herding-Optimization-Seminar
-Educational Python implementation of Elephant Herding Optimization (EHO) based on Chapter 12 of Swarm Intelligence Algorithms: A Tutorial, with Rastrigin experiments, PySide6 visualization, and seminar documentation
+# Elephant Herding Optimization (EHO) — AI Seminar
+
+Seminar môn Trí tuệ nhân tạo về **Elephant Herding Optimization (EHO)** - thuật toán tối ưu hóa lấy cảm hứng từ hành vi tổ chức đàn voi. Mục tiêu là giải thích nguyên lý, mô hình toán học, sơ đồ khối, tái hiện ví dụ trong sách và xây dựng ứng dụng demo trực quan bằng Python.
