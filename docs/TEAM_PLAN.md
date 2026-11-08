@@ -9,3 +9,10 @@
 
 Mỗi thành viên chuẩn bị giải thích ba nhánh cập nhật, khác biệt giữa best hiện tại và best
 lịch sử, nguyên nhân vượt cận, cùng giới hạn của ví dụ in trong sách.
+
+| Thành viên | Phần trình bày đề xuất | Kiến thức cần nắm |
+|---|---|---|
+| Trương Thành Đạt | Mục tiêu, nguồn sách và kết luận | Đối chiếu quyết định với listings, giới hạn nghiệm thu |
+| Thành viên 2 | Công thức và sơ đồ khối | Best hiện tại, best lịch sử, quy tắc hòa và +1 |
+| Thành viên 3 | Book Example, máy bơm và thực nghiệm | Penalty, làm tròn, ngân sách, seed và mốc lưới |
+| Thành viên 4 | Demo và Generation Inspector | Ghép snapshot, vai trò trong bước và phép chiếu |

@@ -3,12 +3,13 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PySide6.QtCore import QSignalBlocker
 from PySide6.QtWidgets import (
-    QFormLayout, QHeaderView, QLabel, QPlainTextEdit, QSpinBox, QTableWidget,
+    QFormLayout, QHBoxLayout, QHeaderView, QLabel, QPlainTextEdit, QPushButton, QSpinBox, QTableWidget,
     QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget,
 )
 
 from objectives import rastrigin
 from objectives.rastrigin import rastrigin_landscape
+from .movement_plot import display_points, draw_movement, position_axes
 
 
 def vector(values):
@@ -22,19 +23,37 @@ class VisualizationPanel(QWidget):
         self.metrics = QLabel()
         self.metrics.setWordWrap(True)
         layout.addWidget(self.metrics)
-        tabs = QTabWidget()
-        layout.addWidget(tabs)
+        generation_controls = QHBoxLayout()
+        self.generation = QSpinBox()
+        self.generation.setAccessibleName("Thế hệ đang xem")
+        self.first_step = QPushButton("Bước đầu (0 → 1)")
+        self.first_step.clicked.connect(self.select_first_step)
+        generation_controls.addWidget(QLabel("Thế hệ đang xem"))
+        generation_controls.addWidget(self.generation)
+        generation_controls.addWidget(self.first_step)
+        generation_controls.addStretch()
+        layout.addLayout(generation_controls)
+        self.tabs = QTabWidget()
+        layout.addWidget(self.tabs)
         self.figure = Figure(layout="constrained")
         self.convergence, self.landscape = self.figure.subplots(1, 2)
         self.canvas = FigureCanvasQTAgg(self.figure)
-        tabs.addTab(self.canvas, "Hội tụ và không gian nghiệm")
+        self.tabs.addTab(self.canvas, "Hội tụ và không gian nghiệm")
+        movement = QWidget()
+        movement_layout = QVBoxLayout(movement)
+        self.movement_caption = QLabel()
+        self.movement_caption.setWordWrap(True)
+        movement_layout.addWidget(self.movement_caption)
+        self.movement_figure = Figure(layout="constrained")
+        self.movement_axis = self.movement_figure.subplots()
+        self.movement_canvas = FigureCanvasQTAgg(self.movement_figure)
+        movement_layout.addWidget(self.movement_canvas, 1)
+        self.tabs.addTab(movement, "Đàn voi di chuyển")
         inspection = QWidget()
         inspect_layout = QVBoxLayout(inspection)
         selection = QFormLayout()
-        self.generation = QSpinBox()
         self.elephant = QSpinBox()
         self.elephant.setMinimum(1)
-        selection.addRow("Thế hệ", self.generation)
         selection.addRow("Cá thể", self.elephant)
         inspect_layout.addLayout(selection)
         self.population = self.population_table()
@@ -46,7 +65,7 @@ class VisualizationPanel(QWidget):
         self.trace = QPlainTextEdit()
         self.trace.setReadOnly(True)
         inspect_layout.addWidget(self.trace)
-        tabs.addTab(inspection, "Generation Inspector")
+        self.tabs.addTab(inspection, "Generation Inspector")
         self.generation.valueChanged.connect(self.select_generation)
         self.elephant.valueChanged.connect(self.show_trace)
         self.clear()
@@ -65,6 +84,9 @@ class VisualizationPanel(QWidget):
         self.landscape_grid = None
         self.metrics.setText("Chọn tham số và bấm Start để theo dõi một lần chạy.")
         self.generation.setEnabled(False)
+        with QSignalBlocker(self.generation):
+            self.generation.setRange(0, 0)
+        self.first_step.setEnabled(False)
         self.elephant.setEnabled(False)
         self.population.setRowCount(0)
         self.previous_population.setRowCount(0)
@@ -73,7 +95,18 @@ class VisualizationPanel(QWidget):
         self.landscape.clear()
         self.convergence.set_title("Hội tụ")
         self.landscape.set_title("Không gian nghiệm")
+        self.clear_movement("Bấm Start để xem các bước cập nhật quần thể.")
         self.canvas.draw_idle()
+
+    def clear_movement(self, message):
+        self.movement_caption.setText(message)
+        self.movement_axis.clear()
+        self.movement_axis.set_axis_off()
+        self.movement_canvas.draw_idle()
+
+    def select_first_step(self):
+        self.generation.setValue(1)
+        self.tabs.setCurrentIndex(1)
 
     def begin(self, config, objective):
         self.clear()
@@ -84,9 +117,13 @@ class VisualizationPanel(QWidget):
             grid_x, grid_y = np.meshgrid(xs, ys)
             self.landscape_grid = grid_x, grid_y, rastrigin_landscape(np.stack([grid_x, grid_y], axis=-1))
 
-    def update_progress(self, row, snapshot):
+    def update_progress(self, row, snapshot, previous):
         self.rows.append(row)
+        with QSignalBlocker(self.generation):
+            self.generation.setRange(0, row.number)
+            self.generation.setValue(row.number)
         self.render(row, snapshot)
+        self.render_movement(row.number, snapshot, previous)
 
     def finish(self, result):
         self.result = result
@@ -95,20 +132,39 @@ class VisualizationPanel(QWidget):
             self.generation.setRange(0, result.completed_generations)
             self.generation.setValue(result.completed_generations)
         self.generation.setEnabled(bool(result.population_history))
+        self.first_step.setEnabled(bool(result.population_history) and result.completed_generations > 0)
         if result.population_history:
             self.select_generation(result.completed_generations)
         else:
             self.trace.setPlainText("Lần chạy lớn. Lịch sử chi tiết đã tắt để giới hạn bộ nhớ.")
-            self.render(result.history[-1], self.snapshot, result.final_population, result.best_position)
+            self.render(result.history[-1], None, result.final_population, result.best_position)
+            self.clear_movement("Lần chạy lớn: không lưu lịch sử để phát lại. Xem quần thể cuối ở tab hội tụ.")
 
     def select_generation(self, index):
         if self.result and self.result.population_history:
-            self.render(self.rows[index], self.result.population_history[index])
+            current = self.result.population_history[index]
+            self.render(self.rows[index], current)
+            previous = None
             if index:
                 previous = self.result.population_history[index - 1]
                 self.fill_population(self.previous_population, previous.population, previous.fitness, previous)
             else:
                 self.previous_population.setRowCount(0)
+            self.render_movement(index, current, previous)
+
+    def render_movement(self, number, current, previous):
+        self.movement_axis.set_axis_on()
+        draw_movement(self.movement_axis, self.config, current, previous, number,
+                      pump=self.objective is not rastrigin)
+        if previous is None:
+            caption = "Thế hệ 0 cho thấy vị trí khởi tạo. Chọn bước 0 → 1 để xem ba toán tử."
+        else:
+            caption = ("Vòng rỗng là vị trí cũ, chấm đặc là vị trí mới. Mỗi mũi tên cho thấy một cá thể "
+                       "đã đi từ đâu đến đâu. Dấu sao đánh dấu điểm tốt nhất tìm được trước bước này.")
+            if previous.worst_index == previous.leader_index:
+                caption += " Đầu đàn cũng là cá thể có điểm kém nhất, nên bước này dùng công thức đầu đàn cho nó."
+        self.movement_caption.setText(caption)
+        self.movement_canvas.draw_idle()
 
     def render(self, row, snapshot, final_population=None, final_best=None):
         self.snapshot = snapshot
@@ -131,7 +187,7 @@ class VisualizationPanel(QWidget):
         axis.grid(alpha=0.15)
         population = final_population if final_population is not None else snapshot.population
         best_position = final_best if final_best is not None else snapshot.best_position
-        self.draw_landscape(row, population, best_position)
+        self.draw_landscape(population, best_position)
         if final_population is not None:
             self.fill_population(self.population, final_population, self.result.final_fitness_values)
         elif snapshot is not None:
@@ -142,33 +198,22 @@ class VisualizationPanel(QWidget):
         self.elephant.setEnabled(bool(self.result and self.result.population_history))
         self.canvas.draw_idle()
 
-    def draw_landscape(self, row, population, best):
+    def draw_landscape(self, population, best):
         axis = self.landscape
         axis.clear()
         dimension = self.config.dimension
-        horizontal, vertical = population[:, 0], np.zeros(len(population))
-        best_vertical = 0
-        if dimension >= 2:
-            vertical, best_vertical = population[:, 1], best[1]
         title = "Phân bố một chiều"
         if self.landscape_grid is not None:
-            axis.contourf(*self.landscape_grid, levels=20, cmap="Blues", alpha=0.72)
+            axis.contour(*self.landscape_grid, levels=15, colors="0.75", linewidths=0.65)
             title = "Rastrigin 2D · Contour"
         elif dimension > 2:
             title = f"Chiếu tọa độ 1–2 từ {dimension}D"
         elif dimension == 2:
             title = "Phân bố lưu lượng máy bơm"
-        if self.result and self.result.population_history and row.number > 0 and dimension == 2:
-            previous = self.result.population_history[row.number - 1].population
-            for old, new in zip(previous[:100], population[:100]):
-                axis.plot([old[0], new[0]], [old[1], new[1]], color="#64748b", alpha=0.25)
-        axis.scatter(horizontal, vertical, color="#df7333", s=23, label="Cá thể")
-        axis.scatter([best[0]], [best_vertical], marker="*", s=125, color="#16825b", label="Best lịch sử")
-        axis.set(xlabel="Tọa độ 1", title=title)
-        if dimension >= 2:
-            axis.set_ylabel("Tọa độ 2")
-        else:
-            axis.set_yticks([])
+        axis.scatter(*display_points(population).T, color="0.25", s=23, label="Cá thể")
+        axis.scatter(*display_points(best).T, marker="*", s=125, color="#245d80", label="Best lịch sử")
+        axis.set_title(title)
+        position_axes(axis, self.config, self.objective is not rastrigin)
         axis.legend(loc="best")
 
     @staticmethod

@@ -11,9 +11,15 @@ from .visualization_panel import vector
 
 
 def result_summary(result):
+    position = result.best_position.tolist()
+    config = result.configuration
     return {
-        "configuration": asdict(result.configuration),
-        "best_position": result.best_position.tolist(),
+        "configuration": asdict(config),
+        "best_position": position,
+        "best_in_bounds": all(
+            lower <= value <= upper
+            for value, lower, upper in zip(position, config.lower_bounds, config.upper_bounds, strict=True)
+        ),
         "best_fitness": result.best_fitness,
         "initial_best_fitness": result.initial_best_fitness,
         "completed_generations": result.completed_generations,
@@ -75,12 +81,14 @@ class ResultsPanel(QWidget):
     def present(self, result, objective_name, scenario):
         self.result, self.objective_name, self.scenario = result, objective_name, scenario
         config = result.configuration
+        bounds_status = "Trong cận" if result_summary(result)["best_in_bounds"] else "Vượt cận"
         self.report.setPlainText(
             f"{objective_name}\n"
             f"{config.population_size} cá thể × {config.dimension} chiều · "
             f"α {config.alpha} · β {config.beta} · Seed {config.random_seed}\n"
             f"Cận dưới {vector(config.lower_bounds)}\nCận trên {vector(config.upper_bounds)}\n\n"
             f"Nghiệm tốt nhất {vector(result.best_position)}\n"
+            f"Miền danh nghĩa của nghiệm tốt nhất {bounds_status}\n"
             f"Fitness tốt nhất {result.best_fitness:.8g}\n"
             f"Fitness tốt nhất ban đầu {result.initial_best_fitness:.8g}\n"
             f"Thế hệ hoàn tất {result.completed_generations}/{config.max_generations}\n"

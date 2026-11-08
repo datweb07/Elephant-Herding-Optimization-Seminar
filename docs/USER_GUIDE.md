@@ -10,6 +10,8 @@
 5. Nhập population, alpha, beta, số thế hệ và seed. Bấm Start. Lỗi cấu hình hiện ở thanh trạng thái.
    Stop yêu cầu dừng sau thế hệ đang chạy. Reset xóa kết quả và giữ các ô tham số để thử lại.
 6. Đọc best lịch sử, best hiện tại, mean, worst, evaluations và cảnh báo cận trong Visualization.
+   Chọn **Đàn voi di chuyển** để xem vị trí cũ và mới của cùng một cá thể. Nút **Bước đầu (0 → 1)**
+   mở ngay lần cập nhật đầu. Dấu sao là best dùng trong bước đang xem, dấu cộng là tâm quần thể cũ.
    Vào Generation Inspector, chọn thế hệ và cá thể để xem công thức và các giá trị thực dùng.
    Nếu chạy vượt 1 triệu ô snapshot, biểu đồ và quần thể cuối vẫn có, lịch sử cá thể bị tắt.
 7. Mở Book Example để đọc 26 so sánh và hai hàng chưa thể tái tạo r.

@@ -41,6 +41,12 @@ Một lần hoàn tất G thế hệ gọi objective đúng P × (G + 1) lần. 
 giữ nguyên. Current Best và Mean có thể tăng. Thời gian core loại thời gian callback cập nhật GUI.
 Số lượt vi phạm tính theo mỗi snapshot, nên một cá thể còn ngoài cận nhiều thế hệ sẽ được đếm lại.
 
+Trong ví dụ sách ở §12.5, best ban đầu là x3, worst là x2. Với α = 0,5,
+tọa độ đầu của x1 chuyển từ −2,542 đến khoảng −1,397 khi r = 0,671. Hàng x3
+được đặt ở β × tâm cũ, còn hàng x2 lấy lại vị trí bằng (12.4).
+Mô tả sinh học dùng nhiều đàn. Hai listing đánh giá theo hàng của một ma trận,
+vì vậy GUI biểu diễn mỗi hàng thành một điểm và tính tâm theo từng cột.
+
 Toán tử ngắn và dễ kiểm tra. Core dùng lại được cho objective khác. Chất lượng phụ thuộc tham số,
 ngân sách và seed. Với beta bằng 0, (12.2) đưa đầu đàn về gốc, trùng cực tiểu của Rastrigin.
 Điều này giúp giải thích kết quả ở benchmark đó và cần được xem xét khi đổi objective.

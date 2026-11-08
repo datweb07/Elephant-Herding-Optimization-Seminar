@@ -6,7 +6,7 @@ from PySide6.QtCore import QThread, Signal
 
 
 class OptimizerWorker(QThread):
-    progress = Signal(object, object)
+    progress = Signal(object, object, object)
     succeeded = Signal(object)
     failed = Signal(str)
 
@@ -16,12 +16,14 @@ class OptimizerWorker(QThread):
         self.save_population = save_population
         self.stop_requested = Event()
         self.last_update = 0.0
+        self.previous_snapshot = None
 
     def report(self, row, snapshot):
         now = perf_counter()
         if row.number == 0 or now - self.last_update >= 0.15:
-            self.progress.emit(row, snapshot)
+            self.progress.emit(row, snapshot, self.previous_snapshot)
             self.last_update = now
+        self.previous_snapshot = snapshot
 
     def run(self):
         try:

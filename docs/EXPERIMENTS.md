@@ -12,6 +12,11 @@ QUICK dùng seed 11, 23, 37, 53, 71. FULL dùng 101–125. Chọn bằng biến 
 `EHO_EXPERIMENT_MODE=FULL` trước khi mở kernel hoặc sửa biến `MODE` trong notebook.
 Book Reproduction có đầu vào cố định.
 
+Đặt `EHO_SAVE_RESULTS=1` trước khi mở kernel để lưu kết quả theo mục vào
+`outputs/quick/` hoặc `outputs/full/`. Mỗi mục có `runs.csv` chứa từng seed và cấu hình,
+`summary.csv`, `metadata.json` và các hình PNG. Experiment 4 ghi cả chi phí bơm và chênh lệch
+fitness từng seed so với mốc lưới. Các tệp này được lưu cục bộ.
+
 Cấu hình cơ sở của các sweep là P=20, d=4, G=50, alpha=0,5, beta=0,1, cận ±5,12.
 Thí nghiệm ghi rõ tham số thay đổi. Nhóm quần thể có hai so sánh, cùng 50 thế hệ và cùng đúng
 1.200 đánh giá. Evaluations bao gồm quần thể khởi tạo. Số liệu lấy từ lời gọi objective thật.

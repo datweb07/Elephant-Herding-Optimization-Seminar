@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QLabel, QMainWindow, QProgressBar, QPushButton,
     QScrollArea, QTabWidget, QTextBrowser, QVBoxLayout, QWidget,
@@ -17,19 +18,19 @@ from .visualization_panel import VisualizationPanel
 from .worker import OptimizerWorker
 
 
-OVERVIEW = """# Elephant Herding Optimization
+OVERVIEW = """## EHO tìm nghiệm như thế nào?
 
-**AI Seminar · Swarm Intelligence · UEH**
+Hãy hình dung bạn đang tìm chỗ thấp trên một bản đồ đồi núi. Mỗi con voi là
+một điểm đang được thử. Độ cao tại điểm đó là **fitness**. Trong ví dụ này,
+điểm càng thấp thì nghiệm càng tốt.
 
-EHO tìm nghiệm có fitness thấp bằng cách mô phỏng ảnh hưởng của voi đầu đàn và
-việc voi đực trưởng thành rời đàn. Clan Updating kéo các nghiệm thường về phía
-nghiệm tốt lịch sử và đặt hàng đầu đàn theo tâm. Separating tạo lại vị trí của hàng kém nhất.
+Ở mỗi bước, các cá thể thường tiến về phía điểm tốt nhất đã tìm thấy. Vị trí
+của cá thể đầu đàn được tính từ tâm của cả nhóm. Cá thể kém nhất thường được
+đặt ở một điểm mới để thử một vùng khác.
 
-- **Algorithm** giải thích công thức và vai trò của từng cá thể.
-- **Visualization** theo dõi lần chạy Rastrigin hoặc phân bổ lưu lượng máy bơm.
-- **Book Example** đối chiếu ví dụ tính tay §12.5.
-- **Application** phân tích chi phí của một kịch bản máy bơm giả lập.
-- **Results** xem và lưu dữ liệu lần chạy.
+Để xem một bước thật, chọn **Rastrigin**, đặt **Số chiều = 2**, bấm **Start**
+rồi chọn **Bước đầu (0 → 1)**. Trong hình, vòng rỗng là chỗ cũ, chấm đặc là
+chỗ mới và mũi tên cho biết mỗi cá thể đã đổi vị trí ra sao.
 
 Nguồn: N. K. Meena, J. Yang và A. Slowik, *Swarm Intelligence Algorithms: A Tutorial*,
 Chương 12, tr. 149–162.
@@ -37,39 +38,44 @@ Chương 12, tr. 149–162.
 
 ALGORITHM = """# Một thế hệ EHO
 
-### Đầu vào và đầu ra
+### Trước khi chạy
 
-Đầu vào gồm hàm mục tiêu, số cá thể, số chiều, cận từng chiều, α, β, số thế hệ và seed.
-Đầu ra gồm nghiệm tốt nhất lịch sử, fitness, số đánh giá và chuỗi chỉ số theo thế hệ.
+Chọn cách tính điểm (hàm mục tiêu), số cá thể, số tọa độ của mỗi điểm và khoảng
+giá trị dùng để khởi tạo. Alpha (α) và beta (β) điều khiển cách đổi vị trí.
+Seed giúp lặp lại cùng một lần chạy khi các thiết lập giống nhau.
 
 ### Khởi tạo và đánh giá
 
-Lấy mỗi tọa độ từ LB + r × (UB − LB), với r đồng đều trên [0,1).
-Mỗi hàng là một nghiệm đầy đủ. Fitness nhỏ nhất là best hiện tại, lớn nhất là worst.
-Khi bằng điểm, lấy hàng đầu tiên.
+Mỗi tọa độ ban đầu được lấy theo LB + r × (UB − LB). LB là cận dưới, UB là
+cận trên, còn r là số ngẫu nhiên từ 0 đến dưới 1. Tính fitness cho từng cá thể.
+Trong quần thể hiện tại, điểm thấp nhất là best và điểm cao nhất là worst.
+Nếu nhiều cá thể bằng điểm, lấy cá thể đứng trước trong bảng.
 
 ### Cập nhật quần thể
 
 1. **(12.1) Cá thể thường.** x′ = x + α × (pbest − x) × r.
-   x là hàng cũ, pbest là nghiệm tốt nhất lịch sử. α điều khiển lực kéo.
-2. **(12.2–12.3) Đầu đàn.** x′ = β × tâm, với tâm là trung bình từng cột của quần thể cũ.
-3. **(12.4) Tách cá thể.** x′ = LB + r × (UB − LB + 1), với LB và UB là cận tọa độ.
-   Số hạng +1 có thể tạo nghiệm vượt cận. Giao diện đếm riêng số cá thể và số tọa độ.
-   Khi hai vai trò cùng hàng, đầu đàn được ưu tiên.
+   Mỗi tọa độ tiến một đoạn từ vị trí cũ x về phía pbest, tức điểm tốt nhất
+   đã tìm thấy từ đầu lần chạy. Độ dài đoạn này phụ thuộc vào α và r.
+2. **(12.2–12.3) Đầu đàn.** x′ = β × tâm. Tính tâm bằng cách lấy trung bình
+   từng tọa độ của các điểm cũ, rồi nhân kết quả với β.
+3. **(12.4) Tách cá thể.** x′ = LB + r × (UB − LB + 1). Cá thể kém nhất
+   nhận một vị trí mới từ công thức này. Số +1 có thể làm vị trí mới vượt cận trên.
+   Nếu cá thể đó cũng giữ vai trò đầu đàn, dùng công thức đầu đàn.
 
 ### Kết thúc thế hệ
 
-Đánh giá từng hàng mới. Chỉ đổi pbest, fitness kỷ lục và chỉ số hàng đầu đàn
-khi có cải thiện nghiêm ngặt. Worst được chọn lại ở mỗi thế hệ.
-Thay toàn bộ quần thể và ghi lịch sử. Trả nghiệm kỷ lục khi đủ thế hệ hoặc người dùng bấm Stop.
+Tính điểm cho các vị trí mới. Nếu một điểm tốt hơn kỷ lục trước đó, lưu điểm
+mới và dùng cá thể tìm ra nó làm đầu đàn cho bước sau. Nếu kỷ lục giữ nguyên,
+hàng đầu đàn cũng giữ nguyên. Cá thể kém nhất được chọn lại sau mỗi bước.
+Khi đủ số thế hệ hoặc bấm Stop, xem điểm tốt nhất đã tìm được trong Results.
 """
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Elephant Herding Optimization · AI Seminar")
-        self.resize(1400, 850)
+        self.setWindowTitle("Elephant Herding Optimization")
+        self.resize(1200, 680)
         self.setMinimumSize(840, 580)
         self.worker = None
         self.active_objective = None
@@ -81,7 +87,6 @@ class MainWindow(QMainWindow):
         heading = QLabel("Elephant Herding Optimization")
         heading.setObjectName("title")
         shell.addWidget(heading)
-        shell.addWidget(QLabel("AI SEMINAR  /  SWARM INTELLIGENCE  /  UEH"))
         body = QHBoxLayout()
         shell.addLayout(body, 1)
 
@@ -95,10 +100,12 @@ class MainWindow(QMainWindow):
         self.stop_button = QPushButton("Stop")
         self.reset_button = QPushButton("Reset")
         self.stop_button.setEnabled(False)
+        buttons = QHBoxLayout()
         for button, slot in ((self.start_button, self.start_run), (self.stop_button, self.stop_run),
                              (self.reset_button, self.reset)):
             button.clicked.connect(slot)
-            control_layout.addWidget(button)
+            buttons.addWidget(button)
+        control_layout.addLayout(buttons)
         control_layout.addStretch()
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -196,9 +203,9 @@ Fitness = năng lượng + {scenario.shortage_penalty:g} × thiếu²
         self.statusBar().showMessage("Đang chạy")
         self.worker.start()
 
-    def report_progress(self, row, snapshot):
+    def report_progress(self, row, snapshot, previous):
         self.progress.setValue(row.number)
-        self.visualization.update_progress(row, snapshot)
+        self.visualization.update_progress(row, snapshot, previous)
         if self.worker and not self.worker.stop_requested.is_set():
             self.statusBar().showMessage(f"Đang chạy · Best {row.best_fitness:.6g} · {row.elapsed:.3f} s")
 
@@ -251,6 +258,12 @@ Fitness = năng lượng + {scenario.shortage_penalty:g} × thiếu²
 def launch():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    palette = QPalette(QColor("#eeeeee"), QColor("#fafafa"))
+    palette.setColor(QPalette.ColorRole.Base, QColor("white"))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#f2f2f2"))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor("#425b6a"))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor("white"))
+    app.setPalette(palette)
     app.setStyleSheet(Path(__file__).with_name("styles.qss").read_text(encoding="utf-8"))
     window = MainWindow()
     window.show()

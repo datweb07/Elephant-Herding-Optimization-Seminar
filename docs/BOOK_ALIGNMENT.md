@@ -15,6 +15,16 @@ Chương 12 của N. K. Meena, J. Yang và A. Slowik, trang in 149–162 (trang 
 | Listing 12.2, tr. 155–157 | `find_best_and_worst` và ba nhánh | Test bằng điểm, ưu tiên đầu đàn khi trùng hàng |
 | §12.5, tr. 157–161 | `verify_book_example` | 26 giá trị đối chiếu, x4/x5 thiếu số r |
 
+## Bằng chứng kiểm thử
+
+| Phương trình | Trang in | Hàm Python | Ca kiểm thử trong `tests/test_core.py` | Kết quả |
+|---|---|---|---|---|
+| (12.1) | 151–152 | `update_regular_elephant` | `test_regular_center_matriarch`, `test_book_replay_all_printed_values` | PASS |
+| (12.2) | 152 | `update_best_elephant` | `test_regular_center_matriarch`, `test_tie_prefers_first_and_matriarch_precedes_separation` | PASS |
+| (12.3) | 152 | `calculate_population_center` | `test_generation_uses_old_population_and_explicit_draws` | PASS |
+| (12.4) | 152–153 | `separate_worst_elephant` | `test_separation_preserves_plus_one_and_overshoot` | PASS |
+| (12.5) | 157–158 | `rastrigin` | `test_rastrigin_origin`, `test_book_replay_all_printed_values` | PASS |
+
 ## Ký hiệu và cách biểu diễn
 
 | MATLAB/C++ | Python | Ý nghĩa |

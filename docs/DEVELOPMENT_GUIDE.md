@@ -15,7 +15,7 @@ từ root. Kiểm thử Qt dùng offscreen. Thí nghiệm mới nên dùng cùng
 ngân sách và chỉ so sánh các điểm cùng thang đo. Từ root có thể chạy:
 
 ```powershell
-python -m jupyter nbconvert --execute --to notebook --output-dir outputs Experiment/*.ipynb
+python -m nbconvert --execute --to notebook --output-dir outputs/quick/notebooks 'Experiment/*.ipynb'
 ```
 
 Review thay đổi core dựa vào BOOK_ALIGNMENT, các công thức, tính đúng của bestloc, số lần gọi

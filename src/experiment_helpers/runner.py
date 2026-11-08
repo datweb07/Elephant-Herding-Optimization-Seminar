@@ -45,6 +45,8 @@ def results_frame(groups):
                 "group": group, "seed": result.random_seed, "alpha": config.alpha,
                 "beta": config.beta, "dimension": config.dimension,
                 "population": config.population_size, "generations": result.completed_generations,
+                "lower_bounds": config.lower_bounds, "upper_bounds": config.upper_bounds,
+                "best_position": tuple(position.tolist()),
                 "fitness": result.best_fitness, "initial": result.initial_best_fitness,
                 "seconds": result.execution_time_seconds, "evaluations": result.total_evaluations,
                 "violating_individuals": result.violating_individuals,
