@@ -1,0 +1,4 @@
+scenario_name,demand,pump_1_max_flow,pump_2_max_flow,pump_1_quadratic_coefficient,pump_1_linear_coefficient,pump_2_quadratic_coefficient,pump_2_linear_coefficient,shortage_penalty,excess_penalty,boundary_penalty
+Low Demand,35,65,55,0.015,0.7,0.022,0.5,5,2,100
+Normal Demand,70,65,55,0.015,0.7,0.022,0.5,5,2,100
+Peak Demand,105,65,55,0.015,0.7,0.022,0.5,5,2,100

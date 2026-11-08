@@ -9,6 +9,7 @@ __pycache__/
 
 # Virtual environments
 .venv/
+.venv-eho/
 venv/
 env/
 ENV/
@@ -59,3 +60,7 @@ references/*.pdf
 
 # Exception: intentional PDF deliverables may be added with `git add -f`
 # only after reviewing permissions, or relax the pattern for team-authored PDFs.
+
+
+# Jupyter checkpoints
+.ipynb_checkpoints/

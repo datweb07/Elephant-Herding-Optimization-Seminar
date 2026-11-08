@@ -1,6 +1,8 @@
-# Dependencies proposed for the future implementation.
-# Pin tested versions once the project starts coding.
-numpy
-matplotlib
-PySide6
-pytest
+numpy>=1.24
+matplotlib>=3.8
+pandas>=2.0
+PySide6>=6.6
+pytest>=8
+notebook>=7
+nbconvert>=7
+ipykernel>=6

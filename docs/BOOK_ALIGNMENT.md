@@ -1,32 +1,62 @@
-# Book Alignment — Kiểm tra mức độ bám sát Chương 12
+# Đối chiếu Chương 12
 
-**Nguồn duy nhất cho logic EHO:** Nand K. Meena, Jin Yang, Adam Slowik, Chapter 12, *Swarm Intelligence Algorithms: A Tutorial*, trang in 149–162, tương ứng trang PDF 174–187.
+Nguồn đối chiếu là PDF được cung cấp trong repo, *Swarm Intelligence Algorithms: A Tutorial*,
+Chương 12 của N. K. Meena, J. Yang và A. Slowik, trang in 149–162 (trang PDF 174–187).
 
-## 1. Quy chiếu giữa sách và mã nguồn dự kiến
-
-| Thành phần dự kiến | Căn cứ trong sách | Điều kiện nghiệm thu |
+| Căn cứ trong sách | Python | Cách kiểm tra |
 |---|---|---|
-| Population initialization | Algorithm 11, bước 1–12; Listings 12.1/12.2 | Khởi tạo nghiệm trong phạm vi, đánh giá OF trên từng nghiệm |
-| Regular elephant update | Công thức (12.1); phần cập nhật trong Listings 12.1/12.2 | Đúng alpha, đúng vị trí tốt nhất, đúng cách lấy random |
-| Best elephant update | Công thức (12.2)–(12.3) | Đúng beta nhân trung bình vị trí |
-| Worst elephant separation | Công thức (12.4) | Tránh tự ý bỏ `+1` khi kiểm chứng bản sách |
-| Fitness evaluation | Algorithm 11 và Listings 12.1/12.2 | Tính trên một nghiệm hoàn chỉnh; chọn min đối với Rastrigin |
-| Best history | Listings 12.1/12.2 | Ghi giá trị tốt nhất đã tìm thấy khi qua các thế hệ |
-| Rastrigin example | §12.5, công thức (12.5), trang 157–161 | Đối chiếu dữ liệu khởi tạo và kết quả tính một vòng trong sách |
+| (12.1), tr. 151–152 | `update_regular_elephant` | Bước tính x1 với r đã in và test độc lập |
+| (12.2), tr. 152 | `update_best_elephant` | Bước tính x3, dùng tâm chưa làm tròn |
+| (12.3), tr. 152 | `calculate_population_center` | Trung bình từng cột của 5 hàng |
+| (12.4), tr. 152–153 | `separate_worst_elephant` | Bước tính x2 và trường hợp vượt cận bắt buộc |
+| (12.5), tr. 157–158 | `rastrigin` | Điểm gốc và 10 fitness từ các tọa độ in |
+| Algorithm 11, tr. 153–154 | `initialize_population`, `run` | Test khởi tạo, thế hệ, bộ đếm, trạng thái kết thúc |
+| Listing 12.1, tr. 153–155 | `update_population`, `run` | Test dùng quần thể cũ và giữ chỉ số đầu đàn |
+| Listing 12.2, tr. 155–157 | `find_best_and_worst` và ba nhánh | Test bằng điểm, ưu tiên đầu đàn khi trùng hàng |
+| §12.5, tr. 157–161 | `verify_book_example` | 26 giá trị đối chiếu, x4/x5 thiếu số r |
 
-## 2. Những điểm cần lưu ý, không được tự sửa ngầm
+## Ký hiệu và cách biểu diễn
 
-1. **Ngữ nghĩa clan / chiều biến:** Phần mô tả thuật toán nói nhiều đàn độc lập, nhưng mã MATLAB/C++ trong chương dùng `pp[j,c]`: `j` là hàng nghiệm, `c` là chiều / cột. Hàm OF đánh giá hàng nghiệm hoàn chỉnh và tìm `bestloc`/`worstloc` toàn cục theo hàng. Để tái hiện Listing 12.1–12.2, cần nêu rõ biểu diễn này trong tài liệu và GUI.
-2. **Phương trình (12.4) có `+1`:** Đây là công thức đúng như in trong sách. Với biến liên tục, công thức có thể tạo vị trí vượt cận trên. Đây là vấn đề của nguồn tham khảo; không tự gắn clipping hoặc loại bỏ `+1` rồi nói là nguyên bản. Nếu cần một biến thể xử lý cận, bắt buộc tách riêng, ghi là điều chỉnh và không dùng để kiểm chứng bản nguyên gốc.
-3. **Thuật ngữ / chỉ số:** Ký hiệu `N`, `nc` ở phần giả mã, code và ví dụ minh họa chưa hoàn toàn đồng nhất. Đặt tên rõ ràng trong Python thành `population_size` và `dimension`; có bảng đối chiếu tên với sách.
-4. **Điều kiện giả mã:** Một biểu thức `if` tại Algorithm 11 có cú pháp khó hiểu khi so với các listing. Cần dựa vào ba nhánh best / worst / ordinary elephant được thể hiện rõ trong mã MATLAB/C++, đồng thời ghi lại điểm chưa thống nhất này.
-5. **Điểm tốt nhất lịch sử / vị trí index:** Mã mẫu ghi nhận `fbest` và `pbest` tốt nhất theo lịch sử; vị trí hàng `bestloc` trong quần thể mới cần đọc kỹ khi hiện thực. Không tự giới thiệu cơ chế elitism thay thế cá thể nếu sách không mô tả.
-6. **Random trong ví dụ:** Số ngẫu nhiên được ấn định trong bước tính tay của sách; seed của Python không đảm bảo tạo trùng chính xác dãy của MATLAB/C++. Kiểm chứng một bước phải cho phép nạp giá trị ngẫu nhiên cố định của sách.
-7. **Giới hạn của ứng dụng:** Sách trình bày ví dụ Rastrigin, không cung cấp mô hình, dữ liệu hoặc thông số cho bài toán vận hành máy bơm. Phải dán nhãn toàn bộ dữ liệu ứng dụng là do nhóm giả lập.
+| MATLAB/C++ | Python | Ý nghĩa |
+|---|---|---|
+| `N` | `population_size` | Số hàng trong listings |
+| `nc` | `dimension` | Số cột trong listings |
+| `pp`, `pp_new` | `population`, `updated` | Ma trận cũ và mới, mỗi hàng một nghiệm |
+| `OF`, `Fitness` | `objective_function`, `fitness` | Hàm trên cả hàng và vector điểm |
+| `LB`, `UB` | `lower_bounds`, `upper_bounds` | Cận theo từng cột |
+| `pp_center` | `center` | Trung bình theo cột |
+| `bestloc_new`, `worstloc` | `current_best`, `worst` | Cực trị trong quần thể đang xét |
+| `bestloc` | `leader` / `leader_index` | Hàng dùng công thức đầu đàn ở lần cập nhật tới |
+| `pbest`, `fbest` | `best_position`, `best_fitness` | Nghiệm và giá trị kỷ lục lịch sử |
+| `Gmax`, `gen` | `max_generations`, `number` | Ngân sách và số thế hệ hoàn tất |
 
-## 3. Quy tắc khi code
+§12.1–12.2 mô tả nhiều clan sinh học, mỗi clan có voi đầu đàn. Listings đánh giá mỗi hàng đầy đủ
+và chọn cực trị theo hàng. §12.5 dùng `N` cho số chiều và `nc` cho số cá thể, đảo cách dùng
+trong listings. Python dùng ma trận `(population_size, dimension)` để giữ phép đánh giá và
+phép tính tâm như ví dụ. MATLAB dùng chỉ số từ 1, Python và C++ dùng từ 0.
 
-- Mỗi toán tử quan trọng được chú thích nguồn theo số phương trình/trang.
-- Có unit test tính toán thủ công cho từng công thức.
-- Mỗi lần thay đổi thuật toán phải so với chương sách trước khi merge.
-- Không dùng kết quả trên benchmark làm bằng chứng rằng bài toán thực tế đã được giải thành công.
+## Các quyết định ảnh hưởng đến kết quả
+
+1. **Thứ tự cập nhật.** Algorithm 11 bước 18 có biểu thức khó đọc. Listing 12.1 dòng 43–56
+   và Listing 12.2 dòng 55–75 cho thấy ba nhánh riêng. Python đọc ma trận cũ, xây ma trận mới
+   theo hàng, sau đó đánh giá từng hàng. Listings xen đánh giá sau khi cập nhật xong mỗi hàng.
+   Với objective xác định và độc lập với RNG của EHO, kết quả và thứ tự đánh giá tương đương.
+2. **Best hiện tại và best lịch sử.** Listing 12.1 dòng 59–77, Listing 12.2 dòng 79–99
+   đổi `bestloc` cùng `pbest` và `fbest` khi cải thiện nghiêm ngặt. Nếu không cải thiện, hàng
+   đầu đàn có thể khác best hiện tại. Python giữ hành vi này. Worst được tính lại mỗi thế hệ.
+   Ma trận mới được lưu nguyên, nên bản sao pbest lịch sử có thể nằm ngoài quần thể hiện tại.
+3. **Bằng điểm.** MATLAB `find` có thể trả nhiều chỉ số. Python theo `min_element` và
+   `max_element` của Listing 12.2 dòng 35–41 và 79–85, lấy lần xuất hiện đầu tiên. Nếu chỉ
+   số đầu đàn và worst trùng, nhánh đầu đàn đứng trước như dòng 60–71. Khi đó thế hệ bỏ qua
+   phép tách và không rút r cho hàng đó.
+4. **Random.** Algorithm 11 bước 8 và (12.1), (12.4) lấy một số cho mỗi tọa độ. Python dùng
+   NumPy `default_rng(seed)`, phân phối đều thực trong [0,1), tương tự ý nghĩa của MATLAB.
+   Listing 12.2 dòng 13 dùng lưới 0,001 và dòng 20 seed theo thời gian. Cùng seed Python tái lập
+   được Python trong cùng môi trường. `update_population` nhận ma trận r trực tiếp để kiểm thử.
+5. **Cận.** (12.4) và hai listings đều có +1. Kết quả giữ nguyên sau cập nhật, kể cả ngoài cận.
+   Bộ đếm đo số lượt cá thể và tọa độ ngoài cận trên mọi thế hệ. (12.2) cũng có thể đưa nghiệm
+   ngoài miền nếu miền không chứa gốc. Penalty bơm thuộc objective.
+6. **Làm tròn.** §12.5 in tọa độ và fitness tới khoảng ba chữ số. Đối chiếu tọa độ và tâm
+   dùng dung sai 0,00051, fitness dùng 0,001. Fitness mới tính lại từ đúng tọa độ đã in.
+   x4 và x5 thiếu r. Kiểm chứng toàn bộ fitness từ tọa độ in là **MATCH**, tái hiện cả chuỗi
+   cập nhật là **NOT FULLY REPRODUCIBLE**.
