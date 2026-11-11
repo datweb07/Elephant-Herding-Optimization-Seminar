@@ -1,9 +1,10 @@
 import sys
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
-    QApplication, QHBoxLayout, QLabel, QMainWindow, QProgressBar, QPushButton,
+    QApplication, QFrame, QHBoxLayout, QLabel, QMainWindow, QProgressBar, QPushButton,
     QScrollArea, QTabWidget, QTextBrowser, QVBoxLayout, QWidget,
 )
 
@@ -84,13 +85,27 @@ class MainWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
         shell = QVBoxLayout(central)
+        shell.setContentsMargins(18, 16, 18, 12)
+        shell.setSpacing(14)
+        header = QFrame()
+        header.setObjectName("hero")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(12)
         heading = QLabel("Elephant Herding Optimization")
         heading.setObjectName("title")
-        shell.addWidget(heading)
+        subtitle = QLabel("Khám phá cách đàn voi tìm nghiệm tốt qua từng thế hệ")
+        subtitle.setObjectName("subtitle")
+        header_layout.addWidget(heading, 0, Qt.AlignmentFlag.AlignVCenter)
+        header_layout.addWidget(subtitle, 0, Qt.AlignmentFlag.AlignVCenter)
+        header_layout.addStretch()
+        shell.addWidget(header)
         body = QHBoxLayout()
+        body.setSpacing(14)
         shell.addLayout(body, 1)
 
         controls = QWidget()
+        controls.setObjectName("sidebar")
         controls.setMinimumWidth(235)
         control_layout = QVBoxLayout(controls)
         self.parameters = ParameterPanel(scenarios)
@@ -115,7 +130,7 @@ class MainWindow(QMainWindow):
 
         self.tabs = QTabWidget()
         body.addWidget(self.tabs, 1)
-        self.tabs.addTab(self.text_page(OVERVIEW), "Overview")
+        self.tabs.addTab(self.overview_page(), "Overview")
         self.tabs.addTab(self.text_page(ALGORITHM), "Algorithm")
         self.visualization = VisualizationPanel()
         self.tabs.addTab(self.visualization, "Visualization")
@@ -128,6 +143,13 @@ class MainWindow(QMainWindow):
         self.progress = QProgressBar()
         self.progress.setFormat("Thế hệ %v / %m")
         self.statusBar().addPermanentWidget(self.progress)
+        self.status_tags = {}
+        for key, value in (("state", "Sẵn sàng"), ("warning", "Cảnh báo: 0"),
+                           ("best", "Best: —"), ("time", "Thời gian: —")):
+            tag = QLabel(value)
+            tag.setObjectName("statusTag")
+            self.status_tags[key] = tag
+            self.statusBar().addPermanentWidget(tag)
         self.statusBar().showMessage("Sẵn sàng")
         self.parameters.scenario.currentTextChanged.connect(self.show_application)
         self.show_application()
@@ -136,6 +158,27 @@ class MainWindow(QMainWindow):
     def text_page(markdown):
         page = QTextBrowser()
         page.setMarkdown(markdown)
+        return page
+
+    @staticmethod
+    def overview_page():
+        page = QTextBrowser()
+        page.setHtml("""<!doctype html><html><body style="font-family: 'Segoe UI'; color: #F8FAFC;">
+<h2 style="color:#F8FAFC;">EHO tìm nghiệm như thế nào?</h2>
+<p>Hãy hình dung bạn đang tìm chỗ thấp trên một bản đồ đồi núi. Mỗi con voi là
+một điểm đang được thử. Độ cao tại điểm đó là <b>fitness</b>. Trong ví dụ này,
+điểm càng thấp thì nghiệm càng tốt.</p>
+<p>Ở mỗi bước, các cá thể thường tiến về phía điểm tốt nhất đã tìm thấy. Vị trí
+của cá thể đầu đàn được tính từ tâm của cả nhóm. Cá thể kém nhất thường được
+đặt ở một điểm mới để thử một vùng khác.</p>
+<div style="background:#0F172A; border-left:3px solid #3B82F6; padding:10px 12px; margin:14px 0;">
+<b style="color:#93C5FD;">Thử một bước thật</b><br>
+Chọn <b>Rastrigin</b>, đặt <b>Số chiều = 2</b>, bấm <b>Start</b> rồi chọn
+<b>Bước đầu (0 → 1)</b>. Vòng rỗng là chỗ cũ, chấm đặc là chỗ mới và mũi tên
+cho biết mỗi cá thể đã đổi vị trí ra sao.</div>
+<p style="color:#94A3B8;">Nguồn: N. K. Meena, J. Yang và A. Slowik,
+<i>Swarm Intelligence Algorithms: A Tutorial</i>, Chương 12, tr. 149–162.</p>
+</body></html>""")
         return page
 
     def show_application(self, *_args):
@@ -193,6 +236,7 @@ Fitness = năng lượng + {scenario.shortage_penalty:g} × thiếu²
         self.tabs.setCurrentWidget(self.visualization)
         self.progress.setRange(0, config.max_generations)
         self.progress.setValue(0)
+        self.set_status_tags("Đang chạy", "Cảnh báo: 0", "Best: —", "Thời gian: —")
         self.set_busy(True)
         save_population = config.population_size * config.dimension * (config.max_generations + 1) <= 1_000_000
         self.worker = OptimizerWorker(ElephantHerdingOptimizer(objective, config), save_population, self)
@@ -207,7 +251,8 @@ Fitness = năng lượng + {scenario.shortage_penalty:g} × thiếu²
         self.progress.setValue(row.number)
         self.visualization.update_progress(row, snapshot, previous)
         if self.worker and not self.worker.stop_requested.is_set():
-            self.statusBar().showMessage(f"Đang chạy · Best {row.best_fitness:.6g} · {row.elapsed:.3f} s")
+            self.status_tags["best"].setText(f"Best: {row.best_fitness:.6g}")
+            self.status_tags["time"].setText(f"Thời gian: {row.elapsed:.3f} s")
 
     def present_result(self, result):
         self.visualization.finish(result)
@@ -218,12 +263,24 @@ Fitness = năng lượng + {scenario.shortage_penalty:g} × thiếu²
         self.results.present(result, name, scenario)
         self.show_application()
         status = "Đã dừng" if result.termination_reason == "stopped" else "Hoàn tất"
-        if result.violating_coordinates:
-            status += f" · Cảnh báo {result.violating_coordinates} lượt tọa độ vượt cận"
-        self.statusBar().showMessage(f"{status} · Best {result.best_fitness:.6g} · {result.execution_time_seconds:.3f} s")
+        self.set_status_tags(status, f"Cảnh báo: {result.violating_coordinates}",
+                             f"Best: {result.best_fitness:.6g}",
+                             f"Thời gian: {result.execution_time_seconds:.3f} s")
+        self.statusBar().showMessage("Kết quả lần chạy đã sẵn sàng")
 
     def report_error(self, message):
+        self.status_tags["state"].setText("Lỗi")
         self.statusBar().showMessage(f"Lỗi chạy EHO · {message}")
+
+    def set_status_tags(self, state, warning, best, elapsed):
+        for key, value in (("state", state), ("warning", warning),
+                           ("best", best), ("time", elapsed)):
+            self.status_tags[key].setText(value)
+        has_warning = warning != "Cảnh báo: 0"
+        warning_tag = self.status_tags["warning"]
+        warning_tag.setProperty("warning", has_warning)
+        warning_tag.style().unpolish(warning_tag)
+        warning_tag.style().polish(warning_tag)
 
     def release_worker(self):
         self.worker.deleteLater()
@@ -244,6 +301,7 @@ Fitness = năng lượng + {scenario.shortage_penalty:g} × thiếu²
         self.active_objective = None
         self.show_application()
         self.progress.setValue(0)
+        self.set_status_tags("Sẵn sàng", "Cảnh báo: 0", "Best: —", "Thời gian: —")
         self.statusBar().showMessage("Sẵn sàng")
 
     def closeEvent(self, event):
@@ -258,13 +316,22 @@ Fitness = năng lượng + {scenario.shortage_penalty:g} × thiếu²
 def launch():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
-    palette = QPalette(QColor("#eeeeee"), QColor("#fafafa"))
-    palette.setColor(QPalette.ColorRole.Base, QColor("white"))
-    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#f2f2f2"))
-    palette.setColor(QPalette.ColorRole.Highlight, QColor("#425b6a"))
+    palette = QPalette(QColor("#0F172A"), QColor("#F8FAFC"))
+    palette.setColor(QPalette.ColorRole.Window, QColor("#0F172A"))
+    palette.setColor(QPalette.ColorRole.WindowText, QColor("#F8FAFC"))
+    palette.setColor(QPalette.ColorRole.Base, QColor("#1E293B"))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#263449"))
+    palette.setColor(QPalette.ColorRole.Text, QColor("#F8FAFC"))
+    palette.setColor(QPalette.ColorRole.Button, QColor("#1E293B"))
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor("#F8FAFC"))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor("#2563EB"))
     palette.setColor(QPalette.ColorRole.HighlightedText, QColor("white"))
     app.setPalette(palette)
-    app.setStyleSheet(Path(__file__).with_name("styles.qss").read_text(encoding="utf-8"))
+    gui_dir = Path(__file__).parent
+    stylesheet = (gui_dir / "styles.qss").read_text(encoding="utf-8")
+    for icon in ("chevron-up.svg", "chevron-down.svg"):
+        stylesheet = stylesheet.replace(f"icons/{icon}", (gui_dir / "icons" / icon).as_posix())
+    app.setStyleSheet(stylesheet)
     window = MainWindow()
     window.show()
     return app.exec()
