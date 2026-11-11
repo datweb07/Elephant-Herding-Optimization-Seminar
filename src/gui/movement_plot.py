@@ -38,13 +38,13 @@ def draw_movement(axis, config, current, previous, number, *, pump=False):
         axis.axvspan(low[0], high[0], facecolor="0.94", label="Cận danh nghĩa")
 
     new = display_points(current.population)
-    axis.scatter(*new.T, s=22, color="0.18", label="Vị trí mới" if previous else "Cá thể")
+    axis.scatter(*new.T, s=22, color="#60A5FA", label="Vị trí mới" if previous else "Cá thể")
     if previous is None:
         axis.scatter(*display_points(current.best_position).T, marker="*", s=105,
-                     color="0.1", label="Best khởi tạo")
+                     color="#FBBF24", label="Best khởi tạo")
     else:
         old = display_points(previous.population)
-        axis.scatter(*old.T, s=23, facecolors="none", edgecolors="0.45", label="Vị trí cũ")
+        axis.scatter(*old.T, s=23, facecolors="none", edgecolors="#94A3B8", label="Vị trí cũ")
         leader = previous.leader_index
         worst = previous.worst_index
         regular = np.ones(len(new), dtype=bool)
@@ -57,14 +57,14 @@ def draw_movement(axis, config, current, previous, number, *, pump=False):
                         color=color, width=width, label=label, zorder=3)
 
         if regular.any():
-            arrows(regular, "0.4", "(12.1) Tiến về best", 0.003)
-        arrows([leader], "#245d80", f"(12.2) Đầu đàn #{leader + 1}", 0.005)
+            arrows(regular, "#94A3B8", "(12.1) Tiến về best", 0.003)
+        arrows([leader], "#2563EB", f"(12.2) Đầu đàn #{leader + 1}", 0.005)
         if worst != leader:
-            arrows([worst], "#9b5424", f"(12.4) Tách #{worst + 1}", 0.005)
+            arrows([worst], "#F97316", f"(12.4) Tách #{worst + 1}", 0.005)
         axis.scatter(*display_points(previous.best_position).T, marker="*", s=105,
-                     color="0.1", label="Best lịch sử trước bước", zorder=4)
+                     color="#FBBF24", label="Best lịch sử trước bước", zorder=4)
         axis.scatter(*display_points(current.center_before).T, marker="+", s=85,
-                     color="#245d80", label="Tâm quần thể cũ", zorder=4)
+                     color="#2563EB", label="Tâm quần thể cũ", zorder=4)
         if len(new) <= 15:
             for index, point in enumerate(new, 1):
                 axis.annotate(str(index), point, xytext=(4, 4), textcoords="offset points", fontsize=8)

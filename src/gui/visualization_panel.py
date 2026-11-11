@@ -16,6 +16,22 @@ def vector(values):
     return np.array2string(np.asarray(values), precision=5, max_line_width=110)
 
 
+def style_axis(axis):
+    axis.set_facecolor("#1E293B")
+    axis.tick_params(colors="#CBD5E1")
+    axis.xaxis.label.set_color("#CBD5E1")
+    axis.yaxis.label.set_color("#CBD5E1")
+    axis.title.set_color("#F8FAFC")
+    for spine in axis.spines.values():
+        spine.set_color("#334155")
+    legend = axis.get_legend()
+    if legend is not None:
+        legend.get_frame().set_facecolor("#1E293B")
+        legend.get_frame().set_edgecolor("#334155")
+        for label in legend.get_texts():
+            label.set_color("#CBD5E1")
+
+
 class VisualizationPanel(QWidget):
     def __init__(self):
         super().__init__()
@@ -35,8 +51,10 @@ class VisualizationPanel(QWidget):
         layout.addLayout(generation_controls)
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs)
-        self.figure = Figure(layout="constrained")
+        self.figure = Figure(layout="constrained", facecolor="#1E293B")
         self.convergence, self.landscape = self.figure.subplots(1, 2)
+        style_axis(self.convergence)
+        style_axis(self.landscape)
         self.canvas = FigureCanvasQTAgg(self.figure)
         self.tabs.addTab(self.canvas, "Hội tụ và không gian nghiệm")
         movement = QWidget()
@@ -44,8 +62,9 @@ class VisualizationPanel(QWidget):
         self.movement_caption = QLabel()
         self.movement_caption.setWordWrap(True)
         movement_layout.addWidget(self.movement_caption)
-        self.movement_figure = Figure(layout="constrained")
+        self.movement_figure = Figure(layout="constrained", facecolor="#1E293B")
         self.movement_axis = self.movement_figure.subplots()
+        style_axis(self.movement_axis)
         self.movement_canvas = FigureCanvasQTAgg(self.movement_figure)
         movement_layout.addWidget(self.movement_canvas, 1)
         self.tabs.addTab(movement, "Đàn voi di chuyển")
@@ -101,6 +120,7 @@ class VisualizationPanel(QWidget):
     def clear_movement(self, message):
         self.movement_caption.setText(message)
         self.movement_axis.clear()
+        style_axis(self.movement_axis)
         self.movement_axis.set_axis_off()
         self.movement_canvas.draw_idle()
 
@@ -156,6 +176,7 @@ class VisualizationPanel(QWidget):
         self.movement_axis.set_axis_on()
         draw_movement(self.movement_axis, self.config, current, previous, number,
                       pump=self.objective is not rastrigin)
+        style_axis(self.movement_axis)
         if previous is None:
             caption = "Thế hệ 0 cho thấy vị trí khởi tạo. Chọn bước 0 → 1 để xem ba toán tử."
         else:
@@ -174,9 +195,10 @@ class VisualizationPanel(QWidget):
             f"Đánh giá {row.evaluations:,}  ·  {row.elapsed:.3f} s  ·  "
             f"Vượt cận {row.violating_individuals} cá thể / {row.violating_coordinates} tọa độ"
         )
-        self.metrics.setStyleSheet("color: #a34406;" if row.violating_coordinates else "")
+        self.metrics.setStyleSheet("color: #FFB366;" if row.violating_coordinates else "")
         axis = self.convergence
         axis.clear()
+        style_axis(axis)
         numbers = [item.number for item in self.rows]
         for attribute, label in (("best_fitness", "Best lịch sử"), ("mean_fitness", "Trung bình"),
                                  ("current_best", "Best hiện tại")):
@@ -184,7 +206,8 @@ class VisualizationPanel(QWidget):
         axis.axvline(row.number, color="#64748b", alpha=0.35)
         axis.set(xlabel="Thế hệ", ylabel="Fitness", title="Hội tụ")
         axis.legend(loc="best")
-        axis.grid(alpha=0.15)
+        style_axis(axis)
+        axis.grid(alpha=0.2, color="#64748B")
         population = final_population if final_population is not None else snapshot.population
         best_position = final_best if final_best is not None else snapshot.best_position
         self.draw_landscape(population, best_position)
@@ -201,6 +224,7 @@ class VisualizationPanel(QWidget):
     def draw_landscape(self, population, best):
         axis = self.landscape
         axis.clear()
+        style_axis(axis)
         dimension = self.config.dimension
         title = "Phân bố một chiều"
         if self.landscape_grid is not None:
@@ -210,11 +234,12 @@ class VisualizationPanel(QWidget):
             title = f"Chiếu tọa độ 1–2 từ {dimension}D"
         elif dimension == 2:
             title = "Phân bố lưu lượng máy bơm"
-        axis.scatter(*display_points(population).T, color="0.25", s=23, label="Cá thể")
-        axis.scatter(*display_points(best).T, marker="*", s=125, color="#245d80", label="Best lịch sử")
+        axis.scatter(*display_points(population).T, color="#60A5FA", s=23, label="Cá thể")
+        axis.scatter(*display_points(best).T, marker="*", s=125, color="#FBBF24", label="Best lịch sử")
         axis.set_title(title)
         position_axes(axis, self.config, self.objective is not rastrigin)
         axis.legend(loc="best")
+        style_axis(axis)
 
     @staticmethod
     def fill_population(table, population, fitness, snapshot=None):

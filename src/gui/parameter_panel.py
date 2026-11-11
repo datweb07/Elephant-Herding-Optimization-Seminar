@@ -1,37 +1,75 @@
 from PySide6.QtWidgets import (
-    QComboBox, QDoubleSpinBox, QFormLayout, QGroupBox, QLineEdit, QSpinBox,
+    QComboBox, QDoubleSpinBox, QGridLayout, QGroupBox, QLabel, QLineEdit,
+    QSpinBox, QVBoxLayout, QWidget,
 )
 
 from eho import EHOConfig
 from objectives import rastrigin
 
 
-class ParameterPanel(QGroupBox):
+class ParameterPanel(QWidget):
     def __init__(self, scenarios):
-        super().__init__("Cấu hình lần chạy")
+        super().__init__()
         self.scenarios = scenarios
-        form = QFormLayout(self)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(9)
+
+        problem, problem_grid = self.section("BÀI TOÁN")
+        layout.addWidget(problem)
         self.objective = QComboBox()
         self.objective.addItems(["Rastrigin", "Pump Allocation"])
         self.scenario = QComboBox()
         self.scenario.addItems(list(scenarios))
         self.scenario.setCurrentText("Normal Demand")
-        form.addRow("Hàm mục tiêu", self.objective)
-        form.addRow("Kịch bản giả lập", self.scenario)
-        self.population = self.spin(form, "Số cá thể", 2, 1000, 5)
-        self.dimension = self.spin(form, "Số chiều", 1, 100, 4)
-        self.alpha = self.spin(form, "Alpha", 0, 1, 0.5)
-        self.beta = self.spin(form, "Beta", 0, 1, 0.1)
-        self.generations = self.spin(form, "Số thế hệ", 1, 10000, 50)
-        self.lower = self.spin(form, "Cận dưới", -100000, 100000, -5.12)
-        self.upper = self.spin(form, "Cận trên", -100000, 100000, 5.12)
+        self.add_field(problem_grid, 0, 0, "Hàm mục tiêu", self.objective, span=2)
+        self.add_field(problem_grid, 2, 0, "Kịch bản giả lập", self.scenario, span=2)
+        self.lower = self.make_spin(-100000, 100000, -5.12)
+        self.upper = self.make_spin(-100000, 100000, 5.12)
+        self.add_field(problem_grid, 4, 0, "Cận dưới", self.lower)
+        self.add_field(problem_grid, 4, 1, "Cận trên", self.upper)
+
+        herd, herd_grid = self.section("THAM SỐ EHO")
+        layout.addWidget(herd)
+        self.population = self.make_spin(2, 1000, 5)
+        self.dimension = self.make_spin(1, 100, 4)
+        self.alpha = self.make_spin(0, 1, 0.5)
+        self.beta = self.make_spin(0, 1, 0.1)
+        self.add_field(herd_grid, 0, 0, "Số cá thể", self.population)
+        self.add_field(herd_grid, 0, 1, "Số chiều", self.dimension)
+        self.add_field(herd_grid, 2, 0, "Alpha (α)", self.alpha)
+        self.add_field(herd_grid, 2, 1, "Beta (β)", self.beta)
+
+        execution, execution_grid = self.section("ĐIỀU KIỆN CHẠY")
+        layout.addWidget(execution)
+        self.generations = self.make_spin(1, 10000, 50)
         self.seed = QLineEdit("42")
-        form.addRow("Seed", self.seed)
+        self.add_field(execution_grid, 0, 0, "Số thế hệ", self.generations)
+        self.add_field(execution_grid, 0, 1, "Seed", self.seed)
+        layout.addStretch(1)
         self.objective.currentIndexChanged.connect(self.refresh_fields)
         self.refresh_fields()
 
     @staticmethod
-    def spin(form, label, lower, upper, value):
+    def section(title):
+        group = QGroupBox(title)
+        grid = QGridLayout(group)
+        grid.setContentsMargins(10, 14, 10, 9)
+        grid.setHorizontalSpacing(9)
+        grid.setVerticalSpacing(3)
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
+        return group, grid
+
+    @staticmethod
+    def add_field(grid, row, column, label_text, control, *, span=1):
+        label = QLabel(label_text)
+        label.setObjectName("fieldLabel")
+        grid.addWidget(label, row, column, 1, span)
+        grid.addWidget(control, row + 1, column, 1, span)
+
+    @staticmethod
+    def make_spin(lower, upper, value):
         if isinstance(value, float):
             control = QDoubleSpinBox()
             control.setDecimals(4)
@@ -40,7 +78,6 @@ class ParameterPanel(QGroupBox):
             control = QSpinBox()
         control.setRange(lower, upper)
         control.setValue(value)
-        form.addRow(label, control)
         return control
 
     def refresh_fields(self):
